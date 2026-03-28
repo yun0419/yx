@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>微信 · 完整版 | 智能回复 | 表情混用 | 引用消息 | 词条库 | 分组折叠</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #111;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100%;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            background-color: #f5f5f5;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+        .page.active {
+            display: flex;
+        }
+
+        .page-header {
+            background: #ffffff;
+            padding: 12px 16px;
+            border-bottom: 0.5px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .page-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #000;
+        }
+        .header-actions {
+            display: flex;
+            gap: 18px;
+        }
+        .header-actions span {
+            font-size: 22px;
+            cursor: pointer;
+            color: #2c2c2e;
+        }
+
+        .conv-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .conv-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 0.5px solid #e9e9e9;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .conv-item:active { background: #f0f0f0; }
+        .conv-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #c4c4c4;
+            margin-right: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .conv-info { flex: 1; }
+        .conv-name { font-weight: 500; font-size: 16px; color: #000; }
+        .conv-preview { font-size: 13px; color: #8e8e93; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-time { font-size: 11px; color: #8e8e93; }
+
+        .contact-section {
+            background: white;
+            margin-top: 8px;
+        }
+        .section-title {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            font-size: 14px;
+            color: #6c6c70;
+        }
+        .contact-item-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 0.5px solid #e9e9e9;
+            cursor: pointer;
+        }
+        .contact-avatar-small {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+        }
+        .contact-name { font-size: 16px; color: #000; flex:1; }
+        .delete-contact-btn {
+            color: #ff3b30;
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 4px;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 24px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 0.5px solid #e5e5e5;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .my-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .my-info { flex:1; }
+        .my-name { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+        .my-status { font-size: 13px; color: #8e8e93; }
+        .menu-item {
+            background: white;
+            padding: 14px 16px;
+            border-bottom: 0.5px solid #e9e9e9;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .chat-detail {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background-color: #f0f0f0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 20;
+        }
+        .chat-detail.active {
+            display: flex;
+        }
+        .chat-header {
+            background: #ffffff;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            border-bottom: 0.5px solid #e5e5e5;
+        }
+        .back-btn {
+            font-size: 26px;
+            cursor: pointer;
+            width: 32px;
+        }
+        .chat-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 17px;
+            text-align: center;
+            margin-right: 32px;
+            cursor: pointer;
+        }
+        .chat-settings-btn {
+            font-size: 22px;
+            cursor: pointer;
+            width: 32px;
+            text-align: right;
+            color: #2c2c2e;
+        }
+        .message-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: background 0.3s;
+        }
+        .message-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        .message-row.left { justify-content: flex-start; }
+        .message-row.right { justify-content: flex-end; }
+        
+        .message-sender {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 8px;
+            width: 44px;
+        }
+        .message-sender.right-side {
+            margin-left: 8px;
+            margin-right: 0;
+            order: 2;
+        }
+        .sender-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #ddd;
+        }
+        .sender-name {
+            font-size: 10px;
+            color: #8e8e93;
+            margin-top: 4px;
+            text-align: center;
+            max-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bubble-wrapper {
+            max-width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        .bubble {
+            padding: 8px 12px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-break: break-word;
+            transition: all 0.3s;
+        }
+        .left .bubble {
+            background-color: #ffffff;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+        .right .bubble {
+            background-color: #d9f0ec;
+            border-bottom-right-radius: 4px;
+        }
+        .quote-message {
+            font-size: 12px;
+            color: #8e8e93;
+            border-left: 3px solid #07c160;
+            padding-left: 8px;
+            margin-bottom: 6px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+        .time-stamp {
+            font-size: 10px;
+            color: #8e8e93;
+            margin-top: 4px;
+            padding: 0 6px;
+        }
+        .system-message {
+            text-align: center;
+            font-size: 11px;
+            background: rgba(0,0,0,0.05);
+            padding: 5px 10px;
+            border-radius: 50px;
+            width: fit-content;
+            align-self: center;
+            margin: 6px auto;
+        }
+        .typing-indicator {
+            text-align: left;
+            font-size: 11px;
+            color: #8e8e93;
+            margin: 4px 0 4px 52px;
+            font-style: italic;
+        }
+        .input-area {
+            background: #ffffff;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            border-top: 0.5px solid #e5e5e5;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .message-input {
+            flex: 1;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 14px;
+            outline: none;
+            font-size: 15px;
+        }
+        .send-btn {
+            background-color: #07c160;
+            border: none;
+            color: white;
+            padding: 7px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .emoji-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 0.5px solid #e5e5e5;
+            margin: 0 12px 8px 12px;
+        }
+        .emoji-item {
+            cursor: pointer;
+            transition: background 0.1s;
+            display: inline-block;
+        }
+        .emoji-item:hover {
+            opacity: 0.8;
+        }
+        .reply-quote-btn {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 4px;
+            color: #07c160;
+            text-align: left;
+            padding: 2px 0;
+        }
+
+        .bottom-tab {
+            background: #ffffff;
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 0 10px;
+            border-top: 0.5px solid #e5e5e5;
+            flex-shrink: 0;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #8e8e93;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+        .tab-item.active {
+            color: #07c160;
+        }
+        .tab-icon {
+            font-size: 24px;
+            display: block;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: white;
+            width: 85%;
+            max-width: 380px;
+            border-radius: 20px;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-card input, .modal-card textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 0.5px solid #ddd;
+            border-radius: 12px;
+        }
+        .btn-primary {
+            background: #07c160;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #e5e5e5;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .phrase-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 8px 0;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+        .phrase-item {
+            padding: 8px 12px;
+            border-bottom: 0.5px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reply-settings {
+            background: white;
+            padding: 16px;
+            margin: 12px;
+            border-radius: 16px;
+        }
+        .reply-settings label {
+            display: block;
+            margin: 12px 0 4px;
+            font-weight: 500;
+        }
+        .reply-settings input, .reply-settings select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 12px;
+            border: 0.5px solid #ddd;
+        }
+        .letter-item {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 0.5px solid #e5e5e5;
+        }
+        .calendar-container {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .text-group {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 12px;
+            background: white;
+        }
+        .phrase-group {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 12px;
+            background: white;
+        }
+        .phrase-group h4 {
+            margin-bottom: 8px;
+            color: #07c160;
+        }
+        .write-letter-area {
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .calendar-year-month {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #8e8e93;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .calendar-day-cell.today {
+            background: #07c160;
+            color: white;
+        }
+        .calendar-day-cell.has-record {
+            background: #07c16020;
+            border: 1px solid #07c160;
+        }
+        .mood-list {
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .mood-item {
+            padding: 8px 12px;
+            border-bottom: 0.5px solid #e9e9e9;
+            display: flex;
+            justify-content: space-between;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-icon {
+            display: inline-block;
+            width: 20px;
+            font-size: 14px;
+            color: #07c160;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="main-view">
+        <!-- 微信页面 -->
+        <div id="wechatPage" class="page active">
+            <div class="page-header">
+                <h2>微信</h2>
+                <div class="header-actions">
+                    <span id="wechatAddBtn">➕</span>
+                </div>
+            </div>
+            <div class="conv-list" id="convListContainer"></div>
+        </div>
+
+        <!-- 通讯录页面 -->
+        <div id="contactsPage" class="page">
+            <div class="page-header">
+                <h2>通讯录</h2>
+                <div class="header-actions">
+                    <span id="contactsAddBtn">➕</span>
+                </div>
+            </div>
+            <div style="overflow-y: auto; flex:1;">
+                <div class="contact-section">
+                    <div class="section-title">联系人</div>
+                    <div id="contactListContainer"></div>
+                </div>
+                <div class="contact-section">
+                    <div class="section-title">群聊</div>
+                    <div id="groupListContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的页面 -->
+        <div id="profilePage" class="page">
+            <div class="page-header">
+                <h2>我</h2>
+            </div>
+            <div id="myProfileCard" class="profile-card" style="cursor:pointer;">
+                <img id="myAvatarImg" class="my-avatar" src="https://picsum.photos/seed/me/100/100" alt="头像">
+                <div class="my-info">
+                    <div class="my-name" id="myNameDisplay">我</div>
+                    <div class="my-status" id="myStatusDisplay">签名: 自由如风</div>
+                </div>
+            </div>
+            <div class="menu-item" id="editMyProfileBtn">
+                <span>个人信息</span>
+                <span>›</span>
+            </div>
+        </div>
+
+        <!-- 设置页面 -->
+        <div id="settingsPage" class="page">
+            <div class="page-header">
+                <h2>设置</h2>
+            </div>
+            <div class="menu-item" id="replySettingsBtn" style="margin-top:12px;">
+                <span>⚡ 回复设置</span>
+                <span>›</span>
+            </div>
+            <div class="menu-item" id="phraseCategoryBtn">
+                <span>📚 词条库管理</span>
+                <span>›</span>
+            </div>
+            <div class="menu-item" id="appearanceBtn">
+                <span>🎨 外观</span>
+                <span>›</span>
+            </div>
+            <div class="menu-item" id="calendarBtn">
+                <span>📅 日历</span>
+                <span>›</span>
+            </div>
+            <div class="menu-item" id="letterBoxBtn">
+                <span>📮 信封投递</span>
+                <span>›</span>
+            </div>
+        </div>
+
+        <!-- 回复设置页面 -->
+        <div id="replySettingsPage" class="page">
+            <div class="page-header">
+                <h2>回复设置</h2>
+                <div class="header-actions">
+                    <span id="backReplyBtn" style="font-size:20px;">←</span>
+                </div>
+            </div>
+            <div class="reply-settings">
+                <label>⏱️ 回复时长范围 (秒)</label>
+                <div style="display: flex; gap: 12px; margin: 8px 0;">
+                    <input type="number" id="replyDelayMin" min="0" max="120" step="1" value="1" style="flex:1;" placeholder="最小">
+                    <span>至</span>
+                    <input type="number" id="replyDelayMax" min="0" max="120" step="1" value="5" style="flex:1;" placeholder="最大">
+                </div>
+                <div style="font-size:12px;color:#8e8e93;margin-top:4px;">对方回复将在该范围内随机延迟</div>
+                
+                <label style="margin-top: 16px;">💬 默认回复风格</label>
+                <select id="replyStyle" style="width:100%; padding:8px; border-radius:12px; border:0.5px solid #ddd;">
+                    <option value="mixed">智能混搭 (文字+表情+颜文字)</option>
+                    <option value="text">纯文字词条</option>
+                    <option value="emoji">表情符号为主</option>
+                    <option value="kaomoji">颜文字为主</option>
+                </select>
+                
+                <div style="margin-top: 20px; padding: 12px; background: #f5f5f5; border-radius: 12px;">
+                    <div style="font-weight: 500;">📌 当前可用资源</div>
+                    <div>文字词条: <span id="textPhraseCount">0</span> 条</div>
+                    <div>表情符号: <span id="emojiCount">0</span> 个</div>
+                    <div>颜文字: <span id="kaomojiCount">0</span> 个</div>
+                    <div>表情包: <span id="emojiImageCount">0</span> 个</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 词条库管理页面 -->
+        <div id="phraseCategoryPage" class="page">
+            <div class="page-header">
+                <h2>词条库管理</h2>
+                <div class="header-actions">
+                    <span id="backPhraseCategoryBtn" style="font-size:20px;">←</span>
+                </div>
+            </div>
+            <div style="padding: 16px;" id="phraseCategoryContent"></div>
+        </div>
+
+        <!-- 外观设置页面 -->
+        <div id="appearancePage" class="page">
+            <div class="page-header">
+                <h2>外观设置</h2>
+                <div class="header-actions">
+                    <span id="backAppearanceBtn" style="font-size:20px;">←</span>
+                </div>
+            </div>
+            <div style="padding: 16px;">
+                <div class="menu-item" id="bgSettingBtn">
+                    <span>🖼️ 聊天背景</span>
+                    <span>›</span>
+                </div>
+                <div class="menu-item" id="bubbleSettingBtn">
+                    <span>💬 气泡样式</span>
+                    <span>›</span>
+                </div>
+                <div class="menu-item" id="fontSettingBtn">
+                    <span>🔤 字体大小</span>
+                    <span>›</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日历页面 -->
+        <div id="calendarPage" class="page">
+            <div class="page-header">
+                <h2>日历</h2>
+                <div class="header-actions">
+                    <span id="backCalendarBtn" style="font-size:20px;">←</span>
+                </div>
+            </div>
+            <div style="padding: 16px;" id="calendarContainer"></div>
+        </div>
+
+        <!-- 信封投递页面 -->
+        <div id="letterPage" class="page">
+            <div class="page-header">
+                <h2>信封投递</h2>
+                <div class="header-actions">
+                    <span id="backFromLetterBtn" style="font-size:20px;">←</span>
+                </div>
+            </div>
+            <div style="padding: 16px; flex:1; overflow-y: auto;">
+                <div class="write-letter-area">
+                    <textarea id="letterContent" rows="4" placeholder="写下你的信件内容..." style="width:100%; padding:12px; border-radius:12px; border:0.5px solid #ddd; font-family:inherit;"></textarea>
+                    <button id="sendLetterBtn" class="btn-primary" style="margin-top:12px; width:100%;">📨 寄出信件 (72小时内回信)</button>
+                </div>
+                <div id="letterListContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-tab">
+        <div class="tab-item active" data-tab="wechat"><span class="tab-icon">💬</span><span>微信</span></div>
+        <div class="tab-item" data-tab="contacts"><span class="tab-icon">👥</span><span>通讯录</span></div>
+        <div class="tab-item" data-tab="profile"><span class="tab-icon">🙋</span><span>我</span></div>
+        <div class="tab-item" data-tab="settings"><span class="tab-icon">⚙️</span><span>设置</span></div>
+    </div>
+
+    <div id="chatDetailView" class="chat-detail">
+        <div class="chat-header">
+            <div class="back-btn" id="closeChatBtn">←</div>
+            <div class="chat-title" id="chatDetailTitle">聊天</div>
+            <div class="chat-settings-btn" id="chatProfileBtn">⋯</div>
+        </div>
+        <div id="emojiPanel" class="emoji-panel" style="display: none;"></div>
+        <div class="message-area" id="chatMessageArea"></div>
+        <div class="input-area">
+            <button id="emojiPickerBtn" style="background: none; border: none; font-size: 24px; cursor: pointer;">😊</button>
+            <input type="text" class="message-input" id="chatInput" placeholder="输入消息...">
+            <button class="send-btn" id="sendMsgBtn">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- 模态框 -->
+<div id="addChoiceModal" class="modal"><div class="modal-card"><h3>新建</h3><div style="display: flex; flex-direction: column; gap: 12px; margin: 20px 0;"><button id="addContactChoiceBtn" class="btn-primary">➕ 新建联系人</button><button id="addGroupChoiceBtn" class="btn-primary">👥 新建群聊</button></div><div class="modal-buttons"><button id="cancelAddChoiceBtn" class="btn-secondary">取消</button></div></div></div>
+<div id="createContactModal" class="modal"><div class="modal-card"><h3>新建联系人</h3><input type="text" id="contactName" placeholder="昵称"><div class="avatar-upload"><label>头像: </label><input type="file" id="contactAvatarFile" accept="image/*"><img id="contactAvatarPreview" class="avatar-preview" style="display:none;"></div><div class="modal-buttons"><button id="cancelContactModalBtn" class="btn-secondary">取消</button><button id="confirmContactModalBtn" class="btn-primary">确定</button></div></div></div>
+<div id="createGroupModal" class="modal"><div class="modal-card"><h3>新建群聊</h3><input type="text" id="groupName" placeholder="群聊名称"><div class="avatar-upload"><label>群头像: </label><input type="file" id="groupAvatarFile" accept="image/*"><img id="groupAvatarPreview" class="avatar-preview" style="display:none;"></div><div id="groupMemberSelectArea" style="max-height:200px; overflow-y:auto; margin:12px 0;"></div><div class="modal-buttons"><button id="cancelGroupModalBtn" class="btn-secondary">取消</button><button id="confirmGroupModalBtn" class="btn-primary">创建</button></div></div></div>
+<div id="editChatProfileModal" class="modal"><div class="modal-card"><h3 id="editProfileTitle">修改资料</h3><input type="text" id="editChatName" placeholder="昵称"><div class="avatar-upload"><label>头像: </label><input type="file" id="editChatAvatarFile" accept="image/*"><img id="editChatAvatarPreview" class="avatar-preview"></div><div class="modal-buttons"><button id="cancelEditProfileBtn" class="btn-secondary">取消</button><button id="saveEditProfileBtn" class="btn-primary">保存</button></div></div></div>
+<div id="editMyModal" class="modal"><div class="modal-card"><h3>编辑我的资料</h3><input type="text" id="editMyName" placeholder="昵称"><input type="text" id="editMyStatus" placeholder="个性签名"><div class="avatar-upload"><label>头像: </label><input type="file" id="editMyAvatarFile" accept="image/*"><img id="editMyAvatarPreview" class="avatar-preview"></div><div class="modal-buttons"><button id="cancelMyModalBtn" class="btn-secondary">取消</button><button id="saveMyModalBtn" class="btn-primary">保存</button></div></div></div>
+
+<script>
+// ==================== 第一部分：全局变量和基础函数 ====================
+let phraseLibrary = {
+    text: {
+        "默认": ["嗯嗯，好的~", "哈哈哈有意思", "确实如此", "明白了，继续加油", "挺棒的！", "收到🫡", "我再想想", "没问题呀", "今天天气不错", "你吃饭了吗", "最近在看什么剧", "这个功能真不错"],
+        "天气": ["☀️ 晴空万里", "🌧️ 下雨了", "⛅ 多云转晴", "❄️ 下雪了", "🌪️ 大风预警", "🌈 彩虹出现", "☁️ 阴天", "🌤️ 晴转多云", "💨 微风徐徐", "🌙 月朗星稀"]
+    },
+    emoji: {
+        "黄脸": ["😀", "😂", "🥰", "😎", "🤔", "😭", "😡", "🥺", "😱", "😤"],
+        "组合": ["👍", "❤️", "🔥", "👏", "🎉", "✨", "🍻", "🚀", "💯", "🎈"],
+        "动物": ["🐱", "🐶", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐸"],
+        "植物": ["🌸", "🌼", "🌻", "🌺", "🌹", "🥀", "🌿", "🍀", "🌴", "🌵"],
+        "食物": ["🍎", "🍊", "🍉", "🍇", "🍓", "🥝", "🍔", "🍟", "🍕", "🍦"],
+        "更多": ["💀", "👻", "🎃", "🤖", "👾", "💩", "💎", "⚡", "🔥", "⭐"]
+    },
+    "颜文字": ["(｡♥‿♥｡)", "(◕‿◕)", "(≧▽≦)", "(◠‿◠)", "(╯°□°）╯", "(●'◡'●)", "(ノ◕ヮ◕)ノ", "~(˘▾˘~)", "(｡◕‿◕｡)", "¯\\_(ツ)_/¯"],
+    emojiImages: []
+};
+
+let replyPhrases = [...phraseLibrary.text["默认"]];
+let myProfile = { id: 'myself', name: '林一', avatar: 'https://picsum.photos/seed/myprofile/100/100', status: '保持微笑，随性聊天' };
+let contacts = [];
+let groups = [];
+let conversations = [];
+let letters = [];
+let appearance = { chatBg: '#f0f0f0', bubbleStyle: 'default', fontSize: 15 };
+let moodRecords = {};
+let currentConvId = null;
+let activeTimers = new Map();
+let currentQuoteMsg = null;
+
+let replySettings = { minDelay: 1, maxDelay: 5, style: 'mixed' };
+let collapsedGroups = {};        // 文字分组折叠状态
+let collapsedEmojiCategories = {}; // 表情符号子分类折叠状态
+let collapsedKaomoji = false;    // 颜文字折叠状态
+let collapsedEmojiImages = false; // 表情包折叠状态
+
+function genId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 8); }
+function getTimeStr() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
+function getFullTimeStr() { const d = new Date(); return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
+function getTodayKey() { const d = new Date(); return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`; }
+function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+function saveAllData() {
+    localStorage.setItem('wechat_full_data_v13', JSON.stringify({ 
+        myProfile, contacts, groups, conversations, replyPhrases, letters, 
+        appearance, moodRecords, phraseLibrary, replySettings, collapsedGroups,
+        collapsedEmojiCategories, collapsedKaomoji, collapsedEmojiImages
+    }));
+}
+function loadReplySettings() {
+    const saved = localStorage.getItem('reply_settings');
+    if (saved) {
+        try { const data = JSON.parse(saved); replySettings = data; } catch(e) {}
+    }
+    if (document.getElementById('replyDelayMin')) {
+        document.getElementById('replyDelayMin').value = replySettings.minDelay;
+        document.getElementById('replyDelayMax').value = replySettings.maxDelay;
+        document.getElementById('replyStyle').value = replySettings.style;
+    }
+}
+function saveReplySettingsToStorage() {
+    localStorage.setItem('reply_settings', JSON.stringify(replySettings));
+}
+function getRandomDelay() {
+    const min = replySettings.minDelay;
+    const max = replySettings.maxDelay;
+    return (Math.random() * (max - min) + min) * 1000;
+}
+
+function generateMixedReply() {
+    const parts = [];
+    const textPhrases = replyPhrases.filter(p => p && p.trim());
+    // 收集所有表情符号（合并所有子分类）
+    const allEmojis = [];
+    for (let key in phraseLibrary.emoji) {
+        if (key !== '颜文字' && Array.isArray(phraseLibrary.emoji[key])) {
+            allEmojis.push(...phraseLibrary.emoji[key]);
+        }
+    }
+    const emojis = allEmojis;
+    const kaomojis = phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"] || [];
+    const emojiImages = phraseLibrary.emojiImages;
+    const count = Math.floor(Math.random() * 2) + 1;
+    
+    for (let i = 0; i < count; i++) {
+        if (replySettings.style === 'text') {
+            if (textPhrases.length) parts.push(textPhrases[Math.floor(Math.random() * textPhrases.length)]);
+        } else if (replySettings.style === 'emoji') {
+            if (emojis.length) parts.push(emojis[Math.floor(Math.random() * emojis.length)]);
+        } else if (replySettings.style === 'kaomoji') {
+            if (kaomojis.length) parts.push(kaomojis[Math.floor(Math.random() * kaomojis.length)]);
+        } else {
+            const r = Math.random();
+            if (r < 0.4 && textPhrases.length) parts.push(textPhrases[Math.floor(Math.random() * textPhrases.length)]);
+            else if (r < 0.6 && emojis.length) parts.push(emojis[Math.floor(Math.random() * emojis.length)]);
+            else if (r < 0.8 && kaomojis.length) parts.push(kaomojis[Math.floor(Math.random() * kaomojis.length)]);
+            else if (emojiImages.length) parts.push('[图片]');
+        }
+    }
+    if (parts.length === 0) return "嗯嗯~";
+    return parts.join(' ');
+}
+
+function renderConvList() {
+    const container = document.getElementById('convListContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    conversations.forEach(conv => {
+        const div = document.createElement('div');
+        div.className = 'conv-item';
+        const avatar = document.createElement('img');
+        avatar.className = 'conv-avatar';
+        avatar.src = conv.avatarUrl || 'https://via.placeholder.com/48';
+        avatar.onerror = () => avatar.src = 'https://via.placeholder.com/48';
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'conv-info';
+        infoDiv.innerHTML = `<div class="conv-name">${escapeHtml(conv.name)}</div><div class="conv-preview">${escapeHtml(conv.lastMsg || '暂无消息')}</div>`;
+        const timeSpan = document.createElement('div');
+        timeSpan.className = 'conv-time';
+        timeSpan.innerText = conv.lastTime || '';
+        div.appendChild(avatar);
+        div.appendChild(infoDiv);
+        div.appendChild(timeSpan);
+        div.addEventListener('click', () => openConversation(conv.id));
+        container.appendChild(div);
+    });
+}
+
+function renderContactsPage() {
+    const contactContainer = document.getElementById('contactListContainer');
+    const groupContainer = document.getElementById('groupListContainer');
+    if(contactContainer) {
+        contactContainer.innerHTML = '';
+        contacts.forEach(ct => {
+            const row = document.createElement('div');
+            row.className = 'contact-item-row';
+            const img = document.createElement('img');
+            img.className = 'contact-avatar-small';
+            img.src = ct.avatarUrl;
+            img.onerror = () => img.src = 'https://via.placeholder.com/44';
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'contact-name';
+            nameSpan.innerText = ct.name;
+            const deleteBtn = document.createElement('span');
+            deleteBtn.className = 'delete-contact-btn';
+            deleteBtn.innerText = '🗑️';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                if(confirm(`确定删除联系人“${ct.name}”吗？`)) {
+                    const convToDelete = conversations.find(c => c.type === 'single' && c.targetId === ct.id);
+                    if(convToDelete) conversations = conversations.filter(c => c.id !== convToDelete.id);
+                    contacts = contacts.filter(c => c.id !== ct.id);
+                    saveAllData();
+                    renderConvList();
+                    renderContactsPage();
+                    if(currentConvId === convToDelete?.id) document.getElementById('closeChatBtn').click();
+                }
+            };
+            row.appendChild(img);
+            row.appendChild(nameSpan);
+            row.appendChild(deleteBtn);
+            row.addEventListener('click', () => {
+                let conv = conversations.find(c => c.type === 'single' && c.targetId === ct.id);
+                if(!conv) {
+                    conv = { id: genId(), type: 'single', targetId: ct.id, name: ct.name, avatarUrl: ct.avatarUrl, messages: [], lastMsg: '', lastTime: getTimeStr() };
+                    conversations.push(conv);
+                    saveAllData();
+                    renderConvList();
+                }
+                openConversation(conv.id);
+            });
+            contactContainer.appendChild(row);
+        });
+    }
+    if(groupContainer) {
+        groupContainer.innerHTML = '';
+        groups.forEach(gr => {
+            const row = document.createElement('div');
+            row.className = 'contact-item-row';
+            const img = document.createElement('img');
+            img.className = 'contact-avatar-small';
+            img.src = gr.avatarUrl || 'https://picsum.photos/seed/group/44/44';
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'contact-name';
+            nameSpan.innerText = gr.name;
+            const deleteBtn = document.createElement('span');
+            deleteBtn.className = 'delete-contact-btn';
+            deleteBtn.innerText = '🗑️';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                if(confirm(`确定删除群聊“${gr.name}”吗？`)) {
+                    const convToDelete = conversations.find(c => c.type === 'group' && c.targetId === gr.id);
+                    if(convToDelete) conversations = conversations.filter(c => c.id !== convToDelete.id);
+                    groups = groups.filter(g => g.id !== gr.id);
+                    saveAllData();
+                    renderConvList();
+                    renderContactsPage();
+                    if(currentConvId === convToDelete?.id) document.getElementById('closeChatBtn').click();
+                }
+            };
+            row.appendChild(img);
+            row.appendChild(nameSpan);
+            row.appendChild(deleteBtn);
+            row.addEventListener('click', () => {
+                let conv = conversations.find(c => c.type === 'group' && c.targetId === gr.id);
+                if(!conv) {
+                    conv = { id: genId(), type: 'group', targetId: gr.id, name: gr.name, avatarUrl: gr.avatarUrl, messages: [], lastMsg: '群聊创建', lastTime: getTimeStr() };
+                    conversations.push(conv);
+                    saveAllData();
+                    renderConvList();
+                }
+                openConversation(conv.id);
+            });
+            groupContainer.appendChild(row);
+        });
+    }
+}
+
+function renderMessages(convId) {
+    const conv = conversations.find(c => c.id === convId);
+    if(!conv) return;
+    const area = document.getElementById('chatMessageArea');
+    area.style.background = appearance.chatBg;
+    area.innerHTML = '';
+    conv.messages.forEach(msg => {
+        if(msg.type === 'system') {
+            const sys = document.createElement('div'); sys.className = 'system-message'; sys.innerText = msg.content; area.appendChild(sys);
+        } else {
+            const row = document.createElement('div'); row.className = `message-row ${msg.type}`;
+            const senderDiv = document.createElement('div'); senderDiv.className = `message-sender ${msg.type === 'right' ? 'right-side' : ''}`;
+            const avatarImg = document.createElement('img'); avatarImg.className = 'sender-avatar';
+            if(msg.type === 'right') {
+                avatarImg.src = myProfile.avatar;
+                avatarImg.onerror = () => avatarImg.src = 'https://via.placeholder.com/40';
+                const nameSpan = document.createElement('div'); nameSpan.className = 'sender-name'; nameSpan.innerText = myProfile.name;
+                senderDiv.appendChild(avatarImg); senderDiv.appendChild(nameSpan);
+            } else {
+                let senderAvatar = '', senderName = '';
+                if(conv.type === 'single') {
+                    const contact = contacts.find(c => c.id === conv.targetId);
+                    if(contact) { senderAvatar = contact.avatarUrl; senderName = contact.name; }
+                } else if(conv.type === 'group') {
+                    if(msg.senderId) {
+                        const contact = contacts.find(c => c.id === msg.senderId);
+                        if(contact) { senderAvatar = contact.avatarUrl; senderName = contact.name; }
+                        else { senderAvatar = 'https://via.placeholder.com/40'; senderName = msg.senderName || '群成员'; }
+                    } else { senderAvatar = 'https://via.placeholder.com/40'; senderName = '群成员'; }
+                }
+                avatarImg.src = senderAvatar;
+                avatarImg.onerror = () => avatarImg.src = 'https://via.placeholder.com/40';
+                const nameSpan = document.createElement('div'); nameSpan.className = 'sender-name'; nameSpan.innerText = senderName;
+                senderDiv.appendChild(avatarImg); senderDiv.appendChild(nameSpan);
+            }
+            const wrapper = document.createElement('div'); wrapper.className = 'bubble-wrapper';
+            const bubble = document.createElement('div'); bubble.className = 'bubble';
+            let contentHtml = '';
+            if(msg.quotedMsg) {
+                contentHtml += `<div class="quote-message">「${escapeHtml(msg.quotedMsg)}」</div>`;
+            }
+            if(msg.imageUrl) {
+                contentHtml += `<img src="${msg.imageUrl}" style="max-width: 200px; max-height: 200px; border-radius: 12px; margin-top: 4px;">`;
+            } else {
+                contentHtml += escapeHtml(msg.content);
+            }
+            bubble.innerHTML = contentHtml;
+            bubble.style.fontSize = appearance.fontSize + 'px';
+            if(appearance.bubbleStyle === 'rounded') bubble.style.borderRadius = '24px';
+            const timeSpan = document.createElement('div'); timeSpan.className = 'time-stamp'; timeSpan.innerText = msg.timestamp;
+            wrapper.appendChild(bubble); wrapper.appendChild(timeSpan);
+            
+            if(msg.type === 'left') {
+                const quoteBtn = document.createElement('button');
+                quoteBtn.className = 'reply-quote-btn';
+                quoteBtn.innerText = '引用';
+                quoteBtn.onclick = () => {
+                    currentQuoteMsg = msg.content;
+                    document.getElementById('chatInput').placeholder = `引用: ${msg.content.substring(0, 30)}...`;
+                    document.getElementById('chatInput').focus();
+                };
+                wrapper.appendChild(quoteBtn);
+            }
+            
+            if(msg.type === 'right') { row.appendChild(wrapper); row.appendChild(senderDiv); }
+            else { row.appendChild(senderDiv); row.appendChild(wrapper); }
+            area.appendChild(row);
+        }
+    });
+    area.scrollTop = area.scrollHeight;
+    if(conv.messages.length) {
+        const last = conv.messages[conv.messages.length-1];
+        conv.lastMsg = last.type === 'system' ? '[系统]' : last.content;
+        conv.lastTime = last.timestamp;
+    }
+    saveAllData();
+    renderConvList();
+}
+
+function sendMessageWithQuote(text, quoteMsg) {
+    if (!text.trim() && !quoteMsg) return;
+    const conv = conversations.find(c => c.id === currentConvId);
+    if (!conv) return;
+    
+    // 处理表情包图片发送
+    const input = document.getElementById('chatInput');
+    let imageToSend = null;
+    if (input.dataset.pendingImage) {
+        imageToSend = input.dataset.pendingImage;
+        input.dataset.pendingImage = '';
+        if (!text.trim() && !quoteMsg) {
+            text = '[图片]';
+        }
+    }
+    
+    let content = text.trim();
+    if (quoteMsg) {
+        const quoteText = typeof quoteMsg === 'string' ? quoteMsg : quoteMsg;
+        content = `「${quoteText}」\n------\n${content}`;
+    }
+    const newMsg = { 
+        id: genId(), 
+        type: 'right', 
+        content: content, 
+        timestamp: getTimeStr(), 
+        quotedMsg: quoteMsg || null,
+        imageUrl: imageToSend
+    };
+    conv.messages.push(newMsg);
+    renderMessages(currentConvId);
+    currentQuoteMsg = null;
+    document.getElementById('chatInput').placeholder = '输入消息...';
+    
+    if (activeTimers.has(currentConvId + '_reply')) clearTimeout(activeTimers.get(currentConvId + '_reply'));
+    const delay = getRandomDelay();
+    const replyTimer = setTimeout(() => {
+        const stillConv = conversations.find(c => c.id === currentConvId);
+        if (stillConv) {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerText = '对方正在输入中……';
+            document.getElementById('chatMessageArea').appendChild(typingDiv);
+            setTimeout(() => {
+                if (document.querySelector('.typing-indicator')) document.querySelector('.typing-indicator').remove();
+                const replyContent = generateMixedReply();
+                if (stillConv.type === 'group') {
+                    const group = groups.find(g => g.id === stillConv.targetId);
+                    if (group && group.membersId && group.membersId.length) {
+                        const memberContacts = contacts.filter(c => group.membersId.includes(c.id));
+                        if (memberContacts.length) {
+                            const randomContact = memberContacts[Math.floor(Math.random() * memberContacts.length)];
+                            const replyMsg = { id: genId(), type: 'left', content: replyContent, timestamp: getTimeStr(), senderId: randomContact.id, senderName: randomContact.name };
+                            stillConv.messages.push(replyMsg);
+                            renderMessages(stillConv.id);
+                        } else {
+                            const replyMsg = { id: genId(), type: 'left', content: replyContent, timestamp: getTimeStr(), senderId: null, senderName: stillConv.name };
+                            stillConv.messages.push(replyMsg);
+                            renderMessages(stillConv.id);
+                        }
+                    } else {
+                        const replyMsg = { id: genId(), type: 'left', content: replyContent, timestamp: getTimeStr(), senderId: null, senderName: stillConv.name };
+                        stillConv.messages.push(replyMsg);
+                        renderMessages(stillConv.id);
+                    }
+                } else {
+                    const replyMsg = { id: genId(), type: 'left', content: replyContent, timestamp: getTimeStr(), senderId: null, senderName: stillConv.name };
+                    stillConv.messages.push(replyMsg);
+                    renderMessages(stillConv.id);
+                }
+                saveAllData();
+            }, 800);
+        }
+        activeTimers.delete(currentConvId + '_reply');
+    }, delay);
+    activeTimers.set(currentConvId + '_reply', replyTimer);
+    saveAllData();
+    document.getElementById('chatInput').value = '';
+}
+
+function openConversation(convId) {
+    if(currentConvId && activeTimers.has(currentConvId + '_reply')) clearTimeout(activeTimers.get(currentConvId + '_reply'));
+    currentConvId = convId;
+    const conv = conversations.find(c => c.id === convId);
+    document.getElementById('chatDetailTitle').innerText = conv.name;
+    renderMessages(convId);
+    document.getElementById('chatDetailView').classList.add('active');
+    document.getElementById('emojiPanel').style.display = 'none';
+}
+
+function addContact(name, avatarUrl) {
+    const newContact = { id: genId(), name: name, avatarUrl: avatarUrl || 'https://picsum.photos/seed/newc/100/100' };
+    contacts.push(newContact);
+    const newConv = { id: genId(), type: 'single', targetId: newContact.id, name: newContact.name, avatarUrl: newContact.avatarUrl, messages: [], lastMsg: '新联系人', lastTime: getTimeStr() };
+    conversations.push(newConv);
+    saveAllData();
+    renderConvList();
+    renderContactsPage();
+}
+
+function createGroup(groupName, memberIds, avatarUrl) {
+    const newGroup = { id: genId(), name: groupName, avatarUrl: avatarUrl || 'https://picsum.photos/seed/groupnew/100/100', membersId: memberIds };
+    groups.push(newGroup);
+    const groupConv = { id: genId(), type: 'group', targetId: newGroup.id, name: newGroup.name, avatarUrl: newGroup.avatarUrl, messages: [], lastMsg: '群聊创建', lastTime: getTimeStr() };
+    conversations.push(groupConv);
+    saveAllData();
+    renderConvList();
+    renderContactsPage();
+}
+
+function editChatProfile(convId, newName, newAvatar) {
+    const conv = conversations.find(c => c.id === convId);
+    if(conv) {
+        conv.name = newName;
+        if(newAvatar) conv.avatarUrl = newAvatar;
+        if(conv.type === 'single') {
+            const contact = contacts.find(c => c.id === conv.targetId);
+            if(contact) { contact.name = newName; if(newAvatar) contact.avatarUrl = newAvatar; }
+        } else if(conv.type === 'group') {
+            const group = groups.find(g => g.id === conv.targetId);
+            if(group) { group.name = newName; if(newAvatar) group.avatarUrl = newAvatar; }
+        }
+        saveAllData();
+        renderConvList();
+        renderContactsPage();
+        if(currentConvId === convId) document.getElementById('chatDetailTitle').innerText = conv.name;
+    }
+}
+
+function renderLetters() {
+    const container = document.getElementById('letterListContainer');
+    if(!container) return;
+    container.innerHTML = letters.length === 0 ? '<div style="text-align:center;padding:40px;">暂无信件</div>' : letters.slice().reverse().map(l => `<div class="letter-item"><div>📤 ${new Date(l.sendTime).toLocaleString()}</div><div>${escapeHtml(l.content)}</div>${l.reply ? `<div>📬 ${l.replyTime}</div><div>${escapeHtml(l.reply)}</div>` : '<div class="letter-status">等待回信中...</div>'}</div>`).join('');
+}
+
+function sendLetter(content) {
+    if(!content.trim()) return;
+    const newLetter = { id: genId(), content: content.trim(), sendTime: Date.now(), reply: null, replyTime: null };
+    letters.push(newLetter);
+    saveAllData();
+    renderLetters();
+    document.getElementById('letterContent').value = '';
+    const delay = Math.random() * 72 * 60 * 60 * 1000;
+    setTimeout(() => {
+        const idx = letters.findIndex(l => l.id === newLetter.id);
+        if(idx !== -1 && !letters[idx].reply) {
+            const replies = [];
+            for(let i=0; i<Math.floor(Math.random()*30)+1; i++) replies.push(generateMixedReply());
+            letters[idx].reply = replies.map((r,i)=>`${i+1}. ${r}`).join('\n');
+            letters[idx].replyTime = getFullTimeStr();
+            saveAllData();
+            renderLetters();
+        }
+    }, delay);
+    alert(`信件已寄出！将在约${Math.floor(delay/3600000)}小时后回信`);
+}
+function renderEmojiPanel() {
+    const panel = document.getElementById('emojiPanel');
+    if (!panel) return;
+    
+    let activeMainTab = 'emoji';      // 当前主分类：emoji / kaomoji / image
+    let activeSubTab = '黄脸';         // emoji 子分类
+    
+    // 构建面板 HTML
+    function buildPanel() {
+        const emojiCategories = Object.keys(phraseLibrary.emoji).filter(k => k !== '颜文字');
+        const kaomojis = phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"] || [];
+        const images = phraseLibrary.emojiImages;
+        
+        let html = `
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 0.5px solid #e5e5e5; padding-bottom: 8px;">
+                <div class="main-tab ${activeMainTab === 'emoji' ? 'active' : ''}" data-main="emoji" style="padding: 4px 12px; cursor: pointer; font-size: 14px; border-radius: 20px; ${activeMainTab === 'emoji' ? 'background: #07c160; color: white;' : 'background: #f0f0f0;'}">😊 Emoji</div>
+                <div class="main-tab ${activeMainTab === 'kaomoji' ? 'active' : ''}" data-main="kaomoji" style="padding: 4px 12px; cursor: pointer; font-size: 14px; border-radius: 20px; ${activeMainTab === 'kaomoji' ? 'background: #07c160; color: white;' : 'background: #f0f0f0;'}">🌸 颜文字</div>
+                <div class="main-tab ${activeMainTab === 'image' ? 'active' : ''}" data-main="image" style="padding: 4px 12px; cursor: pointer; font-size: 14px; border-radius: 20px; ${activeMainTab === 'image' ? 'background: #07c160; color: white;' : 'background: #f0f0f0;'}">🖼️ 表情包</div>
+            </div>
+        `;
+        
+        if (activeMainTab === 'emoji') {
+            // Emoji 子分类标签栏
+            html += `<div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">`;
+            emojiCategories.forEach(cat => {
+                html += `<div class="sub-tab ${activeSubTab === cat ? 'active' : ''}" data-sub="${cat}" style="padding: 2px 10px; cursor: pointer; font-size: 12px; border-radius: 16px; ${activeSubTab === cat ? 'background: #07c160; color: white;' : 'background: #f0f0f0;'}">${cat}</div>`;
+            });
+            html += `</div>`;
+            
+            // 显示当前子分类的表情
+            const currentEmojis = phraseLibrary.emoji[activeSubTab] || [];
+            html += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+            if (currentEmojis.length === 0) {
+                html += `<div style="padding: 8px; color: #8e8e93;">暂无表情</div>`;
+            } else {
+                currentEmojis.forEach(e => {
+                    html += `<div class="emoji-item" data-type="text" data-value="${escapeHtml(e)}" style="padding: 4px 8px; font-size: 24px; background: #f0f0f0; border-radius: 20px; display: inline-block; cursor: pointer;">${e}</div>`;
+                });
+            }
+            html += `</div>`;
+        } else if (activeMainTab === 'kaomoji') {
+            html += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+            if (kaomojis.length === 0) {
+                html += `<div style="padding: 8px; color: #8e8e93;">暂无颜文字</div>`;
+            } else {
+                kaomojis.forEach(k => {
+                    html += `<div class="emoji-item" data-type="text" data-value="${escapeHtml(k)}" style="padding: 4px 8px; font-size: 14px; background: #f0f0f0; border-radius: 20px; display: inline-block; cursor: pointer;">${k}</div>`;
+                });
+            }
+            html += `</div>`;
+        } else if (activeMainTab === 'image') {
+            html += `<div style="display: flex; flex-wrap: wrap; gap: 12px;">`;
+            if (images.length === 0) {
+                html += `<div style="padding: 8px; color: #8e8e93;">暂无表情包</div>`;
+            } else {
+                images.forEach((img, idx) => {
+                    html += `<div class="emoji-item" data-type="image" data-value="${img}" style="padding: 0; background: none; cursor: pointer; display: inline-block;">
+                        <img src="${img}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5;">
+                    </div>`;
+                });
+            }
+            html += `</div>`;
+        }
+        
+        panel.innerHTML = html;
+        
+        // 绑定主分类点击事件
+        document.querySelectorAll('.main-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                activeMainTab = tab.dataset.main;
+                if (activeMainTab === 'emoji') activeSubTab = '黄脸';
+                buildPanel();
+            });
+        });
+        
+        // 绑定子分类点击事件
+        document.querySelectorAll('.sub-tab').forEach(sub => {
+            sub.addEventListener('click', (e) => {
+                activeSubTab = sub.dataset.sub;
+                buildPanel();
+            });
+        });
+        
+        // 绑定表情/图片点击事件
+        document.querySelectorAll('.emoji-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const type = item.dataset.type;
+                const value = item.dataset.value;
+                const input = document.getElementById('chatInput');
+                if (type === 'image') {
+                    input.dataset.pendingImage = value;
+                    input.value += '[图片]';
+                } else {
+                    input.value += value;
+                }
+                input.focus();
+            });
+        });
+    }
+    
+    buildPanel();
+}
+
+function renderPhraseCategoryPage() {
+    const container = document.getElementById('phraseCategoryContent');
+    if (!container) return;
+
+    let html = '';
+
+    // ========== 文字词条分组（带折叠按钮） ==========
+    html += `<div class="phrase-group">
+        <h4>📝 文字词条</h4>
+        <div style="margin-bottom: 12px;">
+            <button id="addTextGroupBtn" class="btn-primary">+ 新增分组</button>
+        </div>`;
+
+    for (const [groupName, phrases] of Object.entries(phraseLibrary.text)) {
+        const isCollapsed = collapsedGroups[groupName] === true;
+        const toggleIcon = isCollapsed ? '▶' : '▼';
+        html += `<div class="text-group" data-group="${groupName}" style="margin-bottom: 20px; border: 1px solid #eee; border-radius: 12px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="toggle-text-group" data-group="${groupName}" style="cursor: pointer; font-size: 14px; color: #07c160;">${toggleIcon}</span>
+                    <strong style="font-size: 16px;">${escapeHtml(groupName)} 组 (${phrases.length}条)</strong>
+                </div>
+                ${groupName !== '默认' ? `<button class="delete-group-btn" data-group="${groupName}" style="background: none; border: none; color: #ff3b30; cursor: pointer; padding: 4px 8px;">🗑️ 删除分组</button>` : ''}
+            </div>
+            <div class="text-group-content" data-group="${groupName}" style="display: ${isCollapsed ? 'none' : 'block'};">
+                <div class="phrase-list" id="textList_${groupName}">`;
+
+        phrases.forEach((phrase, idx) => {
+            html += `<div class="phrase-item" data-group="${groupName}" data-index="${idx}">
+                <span class="phrase-text" style="flex:1; word-break: break-word;">${escapeHtml(phrase)}</span>
+                <span>
+                    <button class="edit-text-phrase" data-group="${groupName}" data-index="${idx}" style="background: none; border: none; color: #07c160; cursor: pointer; margin-right: 8px; font-size: 16px;">✏️</button>
+                    <button class="delete-text-phrase" data-group="${groupName}" data-index="${idx}" style="background: none; border: none; color: #ff3b30; cursor: pointer; font-size: 16px;">🗑️</button>
+                </span>
+            </div>`;
+        });
+
+        html += `</div>
+                <div style="margin-top: 12px;">
+                    <textarea class="batch-text-input" data-group="${groupName}" rows="2" placeholder="每行一个词条，批量添加" style="width: 100%; padding: 6px; border-radius: 8px; border: 0.5px solid #ddd; font-family: inherit;"></textarea>
+                    <button class="batch-add-text-btn" data-group="${groupName}" style="margin-top: 4px; background: #e5e5e5; border: none; padding: 4px 12px; border-radius: 16px; cursor: pointer;">批量添加到此组</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    html += `</div>`;
+
+    // ========== 表情符号（带子分类和折叠按钮） ==========
+    html += `<div class="phrase-group">
+        <div class="collapsible-header" data-section="emoji" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="margin: 0;">😊 表情符号</h4>
+            <span class="toggle-section" data-section="emoji" style="cursor: pointer; font-size: 14px; color: #07c160;">${collapsedEmojiCategories['_global'] ? '▶' : '▼'}</span>
+        </div>
+        <div class="emoji-section-content" style="display: ${collapsedEmojiCategories['_global'] ? 'none' : 'block'};">`;
+    
+    for (let [cat, emojis] of Object.entries(phraseLibrary.emoji)) {
+        if (cat === '颜文字') continue;
+        const isCollapsed = collapsedEmojiCategories[cat] === true;
+        const toggleIcon = isCollapsed ? '▶' : '▼';
+        html += `<div style="margin-top: 12px; border-bottom: 0.5px solid #eee; padding-bottom: 8px;">
+            <div class="collapsible-header" data-category="${cat}" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                <strong>${cat}</strong>
+                <span class="toggle-emoji-cat" data-category="${cat}" style="font-size: 12px; color: #07c160;">${toggleIcon}</span>
+            </div>
+            <div class="emoji-cat-content" data-category="${cat}" style="display: ${isCollapsed ? 'none' : 'block'}; margin-top: 8px;">
+                <div class="phrase-list" data-category="${cat}" style="max-height: 150px; overflow-y: auto;">`;
+        emojis.forEach((emoji, idx) => {
+            html += `<div class="phrase-item" data-category="${cat}" data-index="${idx}">
+                <span class="phrase-text" style="font-size: 18px;">${escapeHtml(emoji)}</span>
+                <span>
+                    <button class="edit-emoji-sub" data-category="${cat}" data-index="${idx}" style="background: none; border: none; color: #07c160; cursor: pointer; margin-right: 8px;">✏️</button>
+                    <button class="delete-emoji-sub" data-category="${cat}" data-index="${idx}" style="background: none; border: none; color: #ff3b30; cursor: pointer;">🗑️</button>
+                </span>
+            </div>`;
+        });
+        html += `</div>
+                <div style="margin-top: 4px;">
+                    <textarea class="batch-emoji-input" data-category="${cat}" rows="1" placeholder="每行一个表情符号" style="width: 100%; padding: 4px; border-radius: 8px; border: 0.5px solid #ddd; font-size: 12px;"></textarea>
+                    <button class="batch-add-emoji-btn" data-category="${cat}" style="margin-top: 2px; background: #e5e5e5; border: none; padding: 2px 8px; border-radius: 12px; cursor: pointer; font-size: 12px;">批量添加</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    html += `</div></div>`;
+
+    // ========== 颜文字（带折叠按钮） ==========
+    const kaomojis = phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"] || [];
+    html += `<div class="phrase-group">
+        <div class="collapsible-header" data-section="kaomoji" style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">🌸 颜文字</h4>
+            <span class="toggle-section" data-section="kaomoji" style="cursor: pointer; font-size: 14px; color: #07c160;">${collapsedKaomoji ? '▶' : '▼'}</span>
+        </div>
+        <div class="kaomoji-section-content" style="display: ${collapsedKaomoji ? 'none' : 'block'}; margin-top: 12px;">
+            <div class="phrase-list" id="kaomojiList" style="max-height: 200px; overflow-y: auto;">`;
+    if (kaomojis.length === 0) {
+        html += `<div style="padding: 12px; text-align: center; color: #8e8e93;">暂无颜文字</div>`;
+    } else {
+        kaomojis.forEach((kao, idx) => {
+            html += `<div class="phrase-item" data-type="kaomoji" data-index="${idx}">
+                <span class="phrase-text">${escapeHtml(kao)}</span>
+                <span>
+                    <button class="edit-kaomoji" data-index="${idx}" style="background: none; border: none; color: #07c160; cursor: pointer; margin-right: 8px;">✏️</button>
+                    <button class="delete-kaomoji" data-index="${idx}" style="background: none; border: none; color: #ff3b30; cursor: pointer;">🗑️</button>
+                </span>
+            </div>`;
+        });
+    }
+    html += `</div>
+        <div style="margin-top: 12px;">
+            <textarea id="batchKaomojiInput" rows="2" placeholder="每行一个颜文字，批量添加" style="width: 100%; padding: 6px; border-radius: 8px; border: 0.5px solid #ddd; font-family: inherit;"></textarea>
+            <button id="batchAddKaomojiBtn" style="margin-top: 4px; background: #e5e5e5; border: none; padding: 4px 12px; border-radius: 16px; cursor: pointer;">批量添加</button>
+        </div>
+    </div></div>`;
+
+    // ========== 表情包（带折叠按钮） ==========
+    html += `<div class="phrase-group">
+        <div class="collapsible-header" data-section="image" style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">🖼️ 表情包</h4>
+            <span class="toggle-section" data-section="image" style="cursor: pointer; font-size: 14px; color: #07c160;">${collapsedEmojiImages ? '▶' : '▼'}</span>
+        </div>
+        <div class="image-section-content" style="display: ${collapsedEmojiImages ? 'none' : 'block'}; margin-top: 12px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding: 8px;" id="emojiImageList">`;
+    if (phraseLibrary.emojiImages.length === 0) {
+        html += `<div style="padding: 12px; text-align: center; color: #8e8e93; width: 100%;">暂无表情包</div>`;
+    } else {
+        phraseLibrary.emojiImages.forEach((img, idx) => {
+            html += `<div style="position: relative; width: 60px; height: 60px;">
+                <img src="${img}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                <button class="delete-emoji-image" data-index="${idx}" style="position: absolute; top: -8px; right: -8px; background: #ff3b30; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>`;
+        });
+    }
+    html += `</div>
+        <input type="file" id="emojiImageInput" accept="image/*" multiple style="margin-top: 8px;">
+        <button id="importEmojiImagesBtn" class="btn-primary" style="margin-top: 8px; background: #07c160; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer;">导入表情包</button>
+    </div></div>`;
+
+    container.innerHTML = html;
+
+    // ========== 绑定文字词条事件 ==========
+    document.querySelectorAll('.edit-text-phrase').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = btn.dataset.group;
+            const idx = parseInt(btn.dataset.index);
+            const oldText = phraseLibrary.text[group][idx];
+            const newText = prompt('编辑词条', oldText);
+            if (newText && newText.trim()) {
+                phraseLibrary.text[group][idx] = newText.trim();
+                if (group === '默认') replyPhrases = [...phraseLibrary.text['默认']];
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+
+    document.querySelectorAll('.delete-text-phrase').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = btn.dataset.group;
+            const idx = parseInt(btn.dataset.index);
+            if (confirm('确定删除该词条吗？')) {
+                phraseLibrary.text[group].splice(idx, 1);
+                if (group === '默认') replyPhrases = [...phraseLibrary.text['默认']];
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+
+    document.querySelectorAll('.batch-add-text-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = btn.dataset.group;
+            const textarea = document.querySelector(`.batch-text-input[data-group="${group}"]`);
+            const raw = textarea.value;
+            const lines = raw.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length === 0) {
+                alert('请输入词条内容');
+                return;
+            }
+            const existingSet = new Set(phraseLibrary.text[group]);
+            lines.forEach(l => existingSet.add(l.trim()));
+            phraseLibrary.text[group] = Array.from(existingSet);
+            if (group === '默认') replyPhrases = [...phraseLibrary.text['默认']];
+            saveAllData();
+            renderPhraseCategoryPage();
+            alert(`已添加 ${lines.length} 条词条到“${group}”组，共 ${phraseLibrary.text[group].length} 条`);
+            textarea.value = '';
+        });
+    });
+
+    document.getElementById('addTextGroupBtn')?.addEventListener('click', () => {
+        let newGroupName = prompt('请输入新分组名称：');
+        if (newGroupName && newGroupName.trim()) {
+            newGroupName = newGroupName.trim();
+            if (!phraseLibrary.text[newGroupName]) {
+                phraseLibrary.text[newGroupName] = [];
+                saveAllData();
+                renderPhraseCategoryPage();
+                alert(`已创建分组“${newGroupName}”`);
+            } else {
+                alert('分组已存在');
+            }
+        }
+    });
+
+    document.querySelectorAll('.delete-group-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = btn.dataset.group;
+            if (confirm(`确定删除分组“${group}”及其所有词条吗？此操作不可恢复。`)) {
+                delete phraseLibrary.text[group];
+                saveAllData();
+                renderPhraseCategoryPage();
+                alert(`已删除分组“${group}”`);
+            }
+        });
+    });
+
+    // 绑定文字分组折叠按钮
+    document.querySelectorAll('.toggle-text-group').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = btn.dataset.group;
+            collapsedGroups[group] = !collapsedGroups[group];
+            saveAllData();
+            renderPhraseCategoryPage();
+        });
+    });
+
+    // ========== 绑定表情符号折叠事件 ==========
+    document.querySelectorAll('.toggle-emoji-cat').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const cat = btn.dataset.category;
+            collapsedEmojiCategories[cat] = !collapsedEmojiCategories[cat];
+            saveAllData();
+            renderPhraseCategoryPage();
+        });
+    });
+    
+    document.querySelectorAll('.toggle-section').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const section = btn.dataset.section;
+            if (section === 'emoji') {
+                collapsedEmojiCategories['_global'] = !collapsedEmojiCategories['_global'];
+            } else if (section === 'kaomoji') {
+                collapsedKaomoji = !collapsedKaomoji;
+            } else if (section === 'image') {
+                collapsedEmojiImages = !collapsedEmojiImages;
+            }
+            saveAllData();
+            renderPhraseCategoryPage();
+        });
+    });
+
+    // ========== 绑定表情符号子分类事件 ==========
+    document.querySelectorAll('.edit-emoji-sub').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const cat = btn.dataset.category;
+            const idx = parseInt(btn.dataset.index);
+            const old = phraseLibrary.emoji[cat][idx];
+            const newVal = prompt('编辑表情符号', old);
+            if (newVal && newVal.trim()) {
+                phraseLibrary.emoji[cat][idx] = newVal.trim();
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+    document.querySelectorAll('.delete-emoji-sub').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const cat = btn.dataset.category;
+            const idx = parseInt(btn.dataset.index);
+            if (confirm('删除该表情符号？')) {
+                phraseLibrary.emoji[cat].splice(idx, 1);
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+    document.querySelectorAll('.batch-add-emoji-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const cat = btn.dataset.category;
+            const textarea = document.querySelector(`.batch-emoji-input[data-category="${cat}"]`);
+            const raw = textarea.value;
+            const lines = raw.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length === 0) return;
+            const existingSet = new Set(phraseLibrary.emoji[cat]);
+            lines.forEach(l => existingSet.add(l.trim()));
+            phraseLibrary.emoji[cat] = Array.from(existingSet);
+            saveAllData();
+            renderPhraseCategoryPage();
+            alert(`已添加 ${lines.length} 个表情符号到“${cat}”分类`);
+            textarea.value = '';
+        });
+    });
+
+    // ========== 绑定颜文字事件 ==========
+    document.querySelectorAll('.edit-kaomoji').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.index);
+            const old = (phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"])[idx];
+            const newVal = prompt('编辑颜文字', old);
+            if (newVal && newVal.trim()) {
+                if (phraseLibrary.emoji["颜文字"]) phraseLibrary.emoji["颜文字"][idx] = newVal.trim();
+                else phraseLibrary["颜文字"][idx] = newVal.trim();
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+    document.querySelectorAll('.delete-kaomoji').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.index);
+            if (confirm('删除该颜文字？')) {
+                if (phraseLibrary.emoji["颜文字"]) phraseLibrary.emoji["颜文字"].splice(idx, 1);
+                else phraseLibrary["颜文字"].splice(idx, 1);
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+    document.getElementById('batchAddKaomojiBtn')?.addEventListener('click', () => {
+        const raw = document.getElementById('batchKaomojiInput').value;
+        const lines = raw.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length === 0) {
+            alert('请输入颜文字');
+            return;
+        }
+        const existingSet = new Set(phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"]);
+        lines.forEach(l => existingSet.add(l.trim()));
+        if (phraseLibrary.emoji["颜文字"]) phraseLibrary.emoji["颜文字"] = Array.from(existingSet);
+        else phraseLibrary["颜文字"] = Array.from(existingSet);
+        saveAllData();
+        renderPhraseCategoryPage();
+        document.getElementById('batchKaomojiInput').value = '';
+        alert(`已添加 ${lines.length} 个颜文字`);
+    });
+
+    // ========== 绑定表情包事件 ==========
+    document.querySelectorAll('.delete-emoji-image').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.index);
+            if (confirm('删除该表情包？')) {
+                phraseLibrary.emojiImages.splice(idx, 1);
+                saveAllData();
+                renderPhraseCategoryPage();
+            }
+        });
+    });
+    document.getElementById('importEmojiImagesBtn')?.addEventListener('click', async () => {
+        const files = document.getElementById('emojiImageInput').files;
+        if (files.length === 0) {
+            alert('请选择图片文件');
+            return;
+        }
+        for (let f of files) {
+            const base64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(f);
+            });
+            phraseLibrary.emojiImages.push(base64);
+        }
+        saveAllData();
+        renderPhraseCategoryPage();
+        alert(`已导入 ${files.length} 个表情包`);
+        document.getElementById('emojiImageInput').value = '';
+    });
+}
+function loadData() {
+    const raw = localStorage.getItem('wechat_full_data_v13');
+    if (raw) {
+        try {
+            const data = JSON.parse(raw);
+            myProfile = data.myProfile || myProfile;
+            contacts = data.contacts || [];
+            groups = data.groups || [];
+            conversations = data.conversations || [];
+            replyPhrases = data.replyPhrases || phraseLibrary.text["默认"];
+            letters = data.letters || [];
+            if (data.appearance) appearance = data.appearance;
+            if (data.moodRecords) moodRecords = data.moodRecords;
+            if (data.phraseLibrary) phraseLibrary = data.phraseLibrary;
+            if (data.replySettings) replySettings = data.replySettings;
+            if (data.collapsedGroups) collapsedGroups = data.collapsedGroups;
+            if (data.collapsedEmojiCategories) collapsedEmojiCategories = data.collapsedEmojiCategories;
+            if (data.collapsedKaomoji !== undefined) collapsedKaomoji = data.collapsedKaomoji;
+            if (data.collapsedEmojiImages !== undefined) collapsedEmojiImages = data.collapsedEmojiImages;
+            
+            // 数据迁移：将旧版平面表情符号数组转换为子分类结构
+            if (phraseLibrary.emoji && Array.isArray(phraseLibrary.emoji["表情符号"])) {
+                const oldEmojis = phraseLibrary.emoji["表情符号"];
+                phraseLibrary.emoji = {
+                    "黄脸": oldEmojis.slice(0, 8),
+                    "组合": oldEmojis.slice(8, 16),
+                    "动物": oldEmojis.slice(16, 24),
+                    "植物": oldEmojis.slice(24, 32),
+                    "食物": oldEmojis.slice(32, 40),
+                    "更多": oldEmojis.slice(40)
+                };
+                for (let key in phraseLibrary.emoji) {
+                    if (!phraseLibrary.emoji[key] || phraseLibrary.emoji[key].length === 0) {
+                        phraseLibrary.emoji[key] = ["😀"];
+                    }
+                }
+            }
+            // 确保颜文字存在
+            if (!phraseLibrary.emoji["颜文字"] && phraseLibrary["颜文字"]) {
+                phraseLibrary.emoji["颜文字"] = phraseLibrary["颜文字"];
+            } else if (!phraseLibrary.emoji["颜文字"]) {
+                phraseLibrary.emoji["颜文字"] = ["(｡♥‿♥｡)", "(◕‿◕)", "(≧▽≦)", "(◠‿◠)"];
+            }
+            
+            if (contacts.length === 0) throw new Error();
+            return;
+        } catch(e) {}
+    }
+    contacts = [
+        { id: 'c1', name: '张三', avatarUrl: 'https://picsum.photos/seed/zhang3/100/100' },
+        { id: 'c2', name: '李小花', avatarUrl: 'https://picsum.photos/seed/lixh/100/100' },
+        { id: 'c3', name: '王小明', avatarUrl: 'https://picsum.photos/seed/wxm/100/100' }
+    ];
+    groups = [];
+    conversations = [];
+    contacts.forEach(ct => {
+        conversations.push({
+            id: genId(), type: 'single', targetId: ct.id, name: ct.name, avatarUrl: ct.avatarUrl,
+            messages: [], lastMsg: '开始聊天', lastTime: getTimeStr()
+        });
+    });
+    letters = [];
+    moodRecords = {};
+    collapsedGroups = {};
+    collapsedEmojiCategories = {};
+    collapsedKaomoji = false;
+    collapsedEmojiImages = false;
+}
+
+function switchTab(tabId) {
+    if(tabId === 'letter') {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('letterPage').classList.add('active');
+        renderLetters();
+    } else if(tabId === 'appearance') {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('appearancePage').classList.add('active');
+    } else if(tabId === 'calendar') {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('calendarPage').classList.add('active');
+        renderCalendar();
+    } else if(tabId === 'phraseCategory') {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('phraseCategoryPage').classList.add('active');
+        renderPhraseCategoryPage();
+    } else if(tabId === 'replySettings') {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('replySettingsPage').classList.add('active');
+        let totalEmojis = 0;
+        for (let key in phraseLibrary.emoji) {
+            if (key !== '颜文字' && Array.isArray(phraseLibrary.emoji[key])) {
+                totalEmojis += phraseLibrary.emoji[key].length;
+            }
+        }
+        document.getElementById('textPhraseCount').innerText = replyPhrases.length;
+        document.getElementById('emojiCount').innerText = totalEmojis;
+        document.getElementById('kaomojiCount').innerText = (phraseLibrary.emoji["颜文字"] || phraseLibrary["颜文字"] || []).length;
+        document.getElementById('emojiImageCount').innerText = phraseLibrary.emojiImages.length;
+    } else {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(tabId + 'Page').classList.add('active');
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab-item[data-tab="${tabId}"]`).classList.add('active');
+        if(tabId === 'contacts') renderContactsPage();
+        if(tabId === 'wechat') renderConvList();
+    }
+}
+
+function renderCalendar() {
+    const container = document.getElementById('calendarContainer');
+    if(!container) return;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let html = `<div class="calendar-container"><div class="calendar-header"><div class="calendar-year-month">${year}年 ${month+1}月</div></div><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div class="calendar-days">`;
+    for(let i = 0; i < startDay; i++) html += `<div class="calendar-day-cell other-month"></div>`;
+    for(let i = 1; i <= daysInMonth; i++) {
+        const dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+        const hasRecord = moodRecords[dateKey] && Object.keys(moodRecords[dateKey]).length > 0;
+        html += `<div class="calendar-day-cell ${i === today.getDate() ? 'today' : ''} ${hasRecord ? 'has-record' : ''}" data-date="${dateKey}">${i}</div>`;
+    }
+    html += `</div></div><div class="mood-list"><div class="section-title">今日情绪</div>`;
+    const todayMoods = moodRecords[getTodayKey()] || {};
+    for(let [id, mood] of Object.entries(todayMoods)) {
+        const name = id === 'myself' ? myProfile.name : (contacts.find(c => c.id === id)?.name || id);
+        html += `<div class="mood-item"><span>${name}</span><span>${mood}</span></div>`;
+    }
+    html += (Object.keys(todayMoods).length === 0 ? '<div style="padding:12px;text-align:center;">暂无情绪记录</div>' : '') + '</div>';
+    container.innerHTML = html;
+    document.querySelectorAll('.calendar-day-cell').forEach(cell => {
+        cell.addEventListener('click', () => { const date = cell.dataset.date; if(date) showDayMoodDetail(date); });
+    });
+}
+
+function showDayMoodDetail(date) {
+    const moods = moodRecords[date] || {};
+    const details = Object.entries(moods).map(([id, mood]) => {
+        const name = id === 'myself' ? myProfile.name : (contacts.find(c => c.id === id)?.name || id);
+        return `${name}: ${mood}`;
+    }).join('\n');
+    alert(`📅 ${date}\n${details || '无情绪记录'}`);
+}
+
+function autoGenerateDailyMoods() {
+    const today = getTodayKey();
+    if(!moodRecords[today]) {
+        moodRecords[today] = {};
+        contacts.forEach(contact => { moodRecords[today][contact.id] = ["😊","😂","🥰","😎","🤔","😭","🔥","🎉"][Math.floor(Math.random()*8)]; });
+        moodRecords[today]['myself'] = ["😊","😂","🥰","😎"][Math.floor(Math.random()*4)];
+        saveAllData();
+    }
+}
+
+function bindEvents() {
+    document.getElementById('wechatAddBtn').onclick = () => document.getElementById('addChoiceModal').style.display = 'flex';
+    document.getElementById('contactsAddBtn').onclick = () => document.getElementById('addChoiceModal').style.display = 'flex';
+    document.getElementById('cancelAddChoiceBtn').onclick = () => document.getElementById('addChoiceModal').style.display = 'none';
+    document.getElementById('addContactChoiceBtn').onclick = () => { document.getElementById('addChoiceModal').style.display = 'none'; document.getElementById('createContactModal').style.display = 'flex'; };
+    document.getElementById('cancelContactModalBtn').onclick = () => document.getElementById('createContactModal').style.display = 'none';
+    document.getElementById('confirmContactModalBtn').onclick = async () => {
+        const name = document.getElementById('contactName').value.trim();
+        if(!name) { alert('请输入昵称'); return; }
+        let avatarBase64 = null;
+        const fileInput = document.getElementById('contactAvatarFile');
+        if(fileInput.files.length) avatarBase64 = await new Promise(r => { const reader = new FileReader(); reader.onload = e => r(e.target.result); reader.readAsDataURL(fileInput.files[0]); });
+        addContact(name, avatarBase64);
+        document.getElementById('createContactModal').style.display = 'none';
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactAvatarFile').value = '';
+    };
+    document.getElementById('addGroupChoiceBtn').onclick = () => {
+        document.getElementById('addChoiceModal').style.display = 'none';
+        const container = document.getElementById('groupMemberSelectArea');
+        container.innerHTML = '<div style="margin-bottom:8px;">选择成员(至少2人)</div>';
+        contacts.forEach(c => { container.innerHTML += `<div class="contact-check-item"><input type="checkbox" value="${c.id}"> <span>${c.name}</span></div>`; });
+        document.getElementById('createGroupModal').style.display = 'flex';
+    };
+    document.getElementById('cancelGroupModalBtn').onclick = () => document.getElementById('createGroupModal').style.display = 'none';
+    document.getElementById('confirmGroupModalBtn').onclick = async () => {
+        const groupName = document.getElementById('groupName').value.trim();
+        if(!groupName) { alert('请输入群聊名称'); return; }
+        const selected = [...document.querySelectorAll('#groupMemberSelectArea input:checked')].map(cb => cb.value);
+        if(selected.length < 2) { alert('至少选择2位联系人'); return; }
+        let avatarBase64 = null;
+        const fileInput = document.getElementById('groupAvatarFile');
+        if(fileInput.files.length) avatarBase64 = await new Promise(r => { const reader = new FileReader(); reader.onload = e => r(e.target.result); reader.readAsDataURL(fileInput.files[0]); });
+        createGroup(groupName, selected, avatarBase64);
+        document.getElementById('createGroupModal').style.display = 'none';
+        document.getElementById('groupName').value = '';
+        document.getElementById('groupAvatarFile').value = '';
+    };
+    document.getElementById('closeChatBtn').onclick = () => {
+        document.getElementById('chatDetailView').classList.remove('active');
+        if(currentConvId && activeTimers.has(currentConvId + '_reply')) clearTimeout(activeTimers.get(currentConvId + '_reply'));
+        currentConvId = null;
+    };
+    document.getElementById('sendMsgBtn').onclick = () => sendMessageWithQuote(document.getElementById('chatInput').value, currentQuoteMsg);
+    document.getElementById('chatInput').addEventListener('keypress', e => { if(e.key === 'Enter') sendMessageWithQuote(e.target.value, currentQuoteMsg); });
+    document.getElementById('chatProfileBtn').onclick = () => {
+        if(!currentConvId) return;
+        const conv = conversations.find(c => c.id === currentConvId);
+        document.getElementById('editProfileTitle').innerText = `修改“${conv.name}”资料`;
+        document.getElementById('editChatName').value = conv.name;
+        document.getElementById('editChatAvatarPreview').src = conv.avatarUrl;
+        document.getElementById('editChatProfileModal').style.display = 'flex';
+    };
+    document.getElementById('cancelEditProfileBtn').onclick = () => document.getElementById('editChatProfileModal').style.display = 'none';
+    document.getElementById('saveEditProfileBtn').onclick = async () => {
+        const newName = document.getElementById('editChatName').value.trim();
+        if(!newName) return;
+        let newAvatar = null;
+        const fileInput = document.getElementById('editChatAvatarFile');
+        if(fileInput.files.length) newAvatar = await new Promise(r => { const reader = new FileReader(); reader.onload = e => r(e.target.result); reader.readAsDataURL(fileInput.files[0]); });
+        editChatProfile(currentConvId, newName, newAvatar);
+        document.getElementById('editChatProfileModal').style.display = 'none';
+    };
+    document.getElementById('editMyProfileBtn').onclick = () => {
+        document.getElementById('editMyName').value = myProfile.name;
+        document.getElementById('editMyStatus').value = myProfile.status;
+        document.getElementById('editMyAvatarPreview').src = myProfile.avatar;
+        document.getElementById('editMyModal').style.display = 'flex';
+    };
+    document.getElementById('myProfileCard').onclick = () => document.getElementById('editMyProfileBtn').click();
+    document.getElementById('saveMyModalBtn').onclick = async () => {
+        const newName = document.getElementById('editMyName').value.trim();
+        if(newName) myProfile.name = newName;
+        const newStatus = document.getElementById('editMyStatus').value.trim();
+        if(newStatus) myProfile.status = newStatus;
+        const fileInput = document.getElementById('editMyAvatarFile');
+        if(fileInput.files.length) myProfile.avatar = await new Promise(r => { const reader = new FileReader(); reader.onload = e => r(e.target.result); reader.readAsDataURL(fileInput.files[0]); });
+        document.getElementById('myNameDisplay').innerText = myProfile.name;
+        document.getElementById('myStatusDisplay').innerText = myProfile.status;
+        document.getElementById('myAvatarImg').src = myProfile.avatar;
+        saveAllData();
+        document.getElementById('editMyModal').style.display = 'none';
+    };
+    document.getElementById('cancelMyModalBtn').onclick = () => document.getElementById('editMyModal').style.display = 'none';
+    document.getElementById('replySettingsBtn').onclick = () => switchTab('replySettings');
+    document.getElementById('backReplyBtn').onclick = () => {
+        replySettings.minDelay = parseInt(document.getElementById('replyDelayMin').value) || 1;
+        replySettings.maxDelay = parseInt(document.getElementById('replyDelayMax').value) || 5;
+        if(replySettings.minDelay > replySettings.maxDelay) [replySettings.minDelay, replySettings.maxDelay] = [replySettings.maxDelay, replySettings.minDelay];
+        replySettings.style = document.getElementById('replyStyle').value;
+        saveReplySettingsToStorage();
+        saveAllData();
+        switchTab('settings');
+    };
+    document.getElementById('phraseCategoryBtn').onclick = () => switchTab('phraseCategory');
+    document.getElementById('backPhraseCategoryBtn').onclick = () => switchTab('settings');
+    document.getElementById('appearanceBtn').onclick = () => switchTab('appearance');
+    document.getElementById('calendarBtn').onclick = () => switchTab('calendar');
+    document.getElementById('letterBoxBtn').onclick = () => { switchTab('letter'); renderLetters(); };
+    document.getElementById('backAppearanceBtn').onclick = () => switchTab('settings');
+    document.getElementById('backCalendarBtn').onclick = () => switchTab('settings');
+    document.getElementById('backFromLetterBtn').onclick = () => switchTab('settings');
+    document.getElementById('sendLetterBtn').onclick = () => sendLetter(document.getElementById('letterContent').value);
+    document.getElementById('bgSettingBtn').onclick = () => {
+        const color = prompt('输入背景颜色值 (如 #f0f0f0 或 lightblue)', appearance.chatBg);
+        if(color) { appearance.chatBg = color; saveAllData(); if(currentConvId) renderMessages(currentConvId); }
+    };
+    document.getElementById('bubbleSettingBtn').onclick = () => {
+        appearance.bubbleStyle = appearance.bubbleStyle === 'rounded' ? 'default' : 'rounded';
+        saveAllData();
+        if(currentConvId) renderMessages(currentConvId);
+        alert(`气泡样式已切换为 ${appearance.bubbleStyle === 'rounded' ? '圆角' : '默认'} 样式`);
+    };
+    document.getElementById('fontSettingBtn').onclick = () => {
+        const size = prompt('输入字体大小(px，推荐12-20)', appearance.fontSize);
+        if(size && !isNaN(size)) { appearance.fontSize = parseInt(size); saveAllData(); if(currentConvId) renderMessages(currentConvId); }
+    };
+    document.getElementById('emojiPickerBtn').onclick = () => {
+        const panel = document.getElementById('emojiPanel');
+        if (panel.style.display === 'none' || !panel.style.display) {
+            renderEmojiPanel();
+            panel.style.display = 'flex';
+        } else {
+            panel.style.display = 'none';
+        }
+    };
+    document.querySelectorAll('.tab-item').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
+    document.getElementById('chatDetailTitle').onclick = () => document.getElementById('chatProfileBtn').click();
+    document.getElementById('contactAvatarFile').onchange = e => { if(e.target.files[0]) document.getElementById('contactAvatarPreview').src = URL.createObjectURL(e.target.files[0]), document.getElementById('contactAvatarPreview').style.display = 'block'; };
+    document.getElementById('groupAvatarFile').onchange = e => { if(e.target.files[0]) document.getElementById('groupAvatarPreview').src = URL.createObjectURL(e.target.files[0]), document.getElementById('groupAvatarPreview').style.display = 'block'; };
+    document.getElementById('editChatAvatarFile').onchange = e => { if(e.target.files[0]) document.getElementById('editChatAvatarPreview').src = URL.createObjectURL(e.target.files[0]); };
+    document.getElementById('editMyAvatarFile').onchange = e => { if(e.target.files[0]) document.getElementById('editMyAvatarPreview').src = URL.createObjectURL(e.target.files[0]); };
+}
+
+loadData();
+loadReplySettings();
+renderConvList();
+renderContactsPage();
+bindEvents();
+autoGenerateDailyMoods();
+if(conversations.length) openConversation(conversations[0].id);
+</script>
+</body>
+</html>
